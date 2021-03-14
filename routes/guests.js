@@ -52,4 +52,50 @@ router.post(
   }
 );
 
+//! DELETE
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    let guest = await Guest.findById(req.params.id);
+    if (!guest) return res.status(404).json({ msg: "Guest not found" });
+    // check if user owns the guest
+    //   if (guest.user.toString() !== req.user.id) {
+    //     return res.status(401).json({ msg: 'Not authorized' })
+    //   }
+
+    await Guest.findByIdAndRemove(req.params.id);
+    res.send("Guest Removed");
+  } catch (error) {
+    console.error(error.message).json("Server Error");
+  }
+});
+
+//! UPDATE
+router.put("/:id", auth, async (req, res) => {
+  const { name, phone, dietary = "Non-Veg", isConfirmed } = req.body;
+
+  //! Build new Guest object
+  const updateGuest = { name, phone, dietary, isConfirmed };
+
+  try {
+    let guest = await Guest.findById(req.params.id);
+
+    if (!guest) return res.status(404).json({ msg: "Guest not found" });
+
+    // Make sure user owns the guest
+    //   if (guest.user.toString() !== req.user.id) {
+    //     return res.status(401).json({ msg: 'Not authorised' })
+    //   }
+
+    guest = await Guest.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateGuest },
+      { new: true }
+    );
+    res.send(guest);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 module.exports = router;
